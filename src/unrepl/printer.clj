@@ -441,7 +441,8 @@
       :else
       (print-trusted-tag-lit-on write "unrepl/object"
                                 [(class x) (format "0x%x" (System/identityHashCode x)) (object-representation x)
-                                 {:bean {unreachable (tagged-literal 'unrepl/... (*elide* (ElidedKVs. (bean x))))}}]
+                                 {:bean {unreachable (tagged-literal 'unrepl/... (*elide* (ElidedKVs. (bean x))))}
+                                  :pr-str (pr-str x)}}]
                                 (sat-inc rem-depth))))) ; is very trusted
 
 (defn edn-str [x]
