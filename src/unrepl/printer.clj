@@ -353,13 +353,13 @@
   clojure.lang.TaggedLiteral
   (-print-on [x write rem-depth]
     (case (:tag x)
-      unrepl/... (binding ; don't elide the elision 
+      unrepl/... (binding ; don't elide the elision
                   [*print-length* Long/MAX_VALUE
                    *print-level* Long/MAX_VALUE
                    *print-budget* Long/MAX_VALUE
                    unrepl/*string-length* Long/MAX_VALUE]
-                   (write (str "#" (:tag x) " "))
-                   (print-on write (:form x) Long/MAX_VALUE))
+                  (write (str "#" (:tag x) " "))
+                  (print-on write (:form x) Long/MAX_VALUE))
       unrepl/browsable (let [[x thunk] (:form x)
                              rem-depth (inc rem-depth)]
                          (set! *print-budget* (bump *print-budget* 2))
@@ -381,13 +381,25 @@
                         (symbol (name (ns-name ns)) (name (:name (meta x)))))
                       rem-depth))
 
+  java.lang.reflect.Method
+  (-print-on [m write rem-depth]
+    (print-on write
+              (apply list
+                     (symbol (str "." (.getName m)))
+                     'this
+                     (.getParameterTypes m))
+             rem-depth))
+
   Throwable
   (-print-on [t write rem-depth]
     (print-tag-lit-on write "error" (Throwable->map'' t) rem-depth))
 
   Class
   (-print-on [x write rem-depth]
-    (print-tag-lit-on write "unrepl.java/class" (class-form x) rem-depth))
+    (print-tag-lit-on write "unrepl.java/class"
+                      [(class-form x)
+                       (tagged-literal 'unrepl/... (->> x .getMethods *elide*))]
+                      rem-depth))
 
   java.util.Date (-print-on [x write rem-depth] (write (pr-str x)))
   java.util.Calendar (-print-on [x write rem-depth] (write (pr-str x)))
@@ -424,6 +436,13 @@
 (extend-protocol MachinePrintable
   nil
   (-print-on [_ write _] (write "nil"))
+
+  java.math.BigDecimal
+  (-print-on [x write _] (write (str "#unrepl/bigdec \"" x "\"")))
+
+  clojure.lang.BigInt
+  (-print-on [x write _] (write (str "#unrepl/bigint \"" x "\"")))
+
   Object
   (-print-on [x write rem-depth]
     (cond
