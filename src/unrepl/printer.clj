@@ -381,14 +381,26 @@
                         (symbol (name (ns-name ns)) (name (:name (meta x)))))
                       rem-depth))
 
+  java.lang.reflect.Constructor
+  (-print-on [m write rem-depth]
+    (print-on write
+              (cons (symbol (str "new " (.getName m)))
+                    (.getParameterTypes m))
+              rem-depth))
+
   java.lang.reflect.Method
   (-print-on [m write rem-depth]
     (print-on write
-              (apply list
-                     (symbol (str "." (.getName m)))
-                     'this
-                     (.getParameterTypes m))
-             rem-depth))
+              (if (-> m .getModifiers java.lang.reflect.Modifier/isStatic)
+                (cons (symbol (-> m .getDeclaringClass .getName)
+                              (.getName m))
+                      (.getParameterTypes m))
+
+                (apply list
+                  (symbol (str "." (.getName m)))
+                  'this
+                  (.getParameterTypes m)))
+              rem-depth))
 
   Throwable
   (-print-on [t write rem-depth]
@@ -398,7 +410,11 @@
   (-print-on [x write rem-depth]
     (print-tag-lit-on write "unrepl.java/class"
                       [(class-form x)
-                       (tagged-literal 'unrepl/... (->> x .getMethods *elide*))]
+                       (tagged-literal 'unrepl/... (*elide*
+                                                    (concat (map (fn [m] (symbol (-> m .getClass .getName) (str m)))
+                                                                 (.getEnumConstants x))
+                                                            (.getConstructors x)
+                                                            (.getMethods x))))]
                       rem-depth))
 
   java.util.Date (-print-on [x write rem-depth] (write (pr-str x)))
