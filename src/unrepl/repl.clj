@@ -131,16 +131,16 @@
           (offset! (count s))
           s)))))
 
-(defn ensure-unrepl-reader 
+(defn ensure-unrepl-reader
   ([rdr]
-    (if (instance? ILocatedReader rdr)
-      rdr
-      (unrepl-reader rdr)))
+   (if (instance? ILocatedReader rdr)
+     rdr
+     (unrepl-reader rdr)))
   ([rdr name]
-    (if (instance? ILocatedReader rdr)
-      rdr
-      (doto (unrepl-reader rdr)
-        (.setCoords {:file name})))))
+   (if (instance? ILocatedReader rdr)
+     rdr
+     (doto (unrepl-reader rdr)
+       (.setCoords {:file name})))))
 
 (defn soft-store [make-action]
   (let [ids-to-session+refs (atom {})
@@ -273,10 +273,10 @@
         :else (do (.unread s c) true)))))
 
 (defn unrepl-read [request-prompt request-exit]
-  (blame :read 
+  (blame :read
     (if (seek-readable *in*)
       (let [coords (:coords *in*)]
-        (try 
+        (try
           (read {:read-cond :allow :eof request-exit} *in*)
           (finally
             (let [coords' (:coords *in*)]
