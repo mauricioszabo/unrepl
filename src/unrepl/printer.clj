@@ -348,6 +348,14 @@
 
 ;; --
 
+(defrecord Taggable [tag obj]
+  MachinePrintable
+  (-print-on [_ write rem-depth]
+    (print-trusted-tag-lit-on write tag obj rem-depth)))
+(defn- taggable [x]
+  (try
+    (edn/read-string {:default ->Taggable} (pr-str x))
+    (catch Throwable _)))
 
 (extend-protocol MachinePrintable
   clojure.lang.TaggedLiteral
@@ -475,10 +483,10 @@
       (set? x) (print-coll "#{" "}" write x rem-depth)
       :else
       (print-trusted-tag-lit-on write "unrepl/object"
-                                [(class x) (pr-str x)
+                                [(class x)
+                                 (taggable x)
                                  (format "0x%x" (System/identityHashCode x)) (object-representation x)
-                                 {:bean {unreachable (tagged-literal 'unrepl/... (*elide* (ElidedKVs. (bean x))))}
-                                  :pr-str (pr-str x)}]
+                                 {:bean {unreachable (tagged-literal 'unrepl/... (*elide* (ElidedKVs. (bean x))))}}]
                                 (sat-inc rem-depth))))) ; is very trusted
 
 (defn edn-str [x]
