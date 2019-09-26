@@ -34,8 +34,8 @@
       (not (identical? impl default)))))
 
 (def ^:private datafiable?
-  (if-some [Datafiable (some-> 'clojure.core.protocols/Datafiable resolve deref)]
-    #(or (get (meta %) 'clojure.core.protocols/datafy) (really-satisfies? Datafiable %))
+  (if-some [Datafiable (some-> 'clojure.core.protocols/Datafiable resolve)]
+    #(or (get (meta %) 'clojure.core.protocols/datafy) (really-satisfies? (deref Datafiable) %))
     (constantly false)))
 
 (def ^:private datafy
@@ -43,8 +43,8 @@
       (clojure.lang.Var$Unbound. #'datafy)))
 
 (def ^:private navigable?
-  (if-some [Navigable (some-> 'clojure.core.protocols/Navigable resolve deref)]
-    #(or (get (meta %) 'clojure.core.protocols/nav) (really-satisfies? Navigable %))
+  (if-some [Navigable (some-> 'clojure.core.protocols/Navigable resolve)]
+    #(or (get (meta %) 'clojure.core.protocols/nav) (really-satisfies? (deref Navigable) %))
     (constantly false)))
 
 (def ^:private nav
@@ -357,15 +357,16 @@
                    *print-level* Long/MAX_VALUE
                    *print-budget* Long/MAX_VALUE
                    unrepl/*string-length* Long/MAX_VALUE]
-                  (write (str "#" (:tag x) " "))
-                  (print-on write (:form x) Long/MAX_VALUE))
-      unrepl/browsable (let [[x thunk] (:form x)
+                   (write (str "#" (:tag x) " "))
+                   (print-on write (:form x) Long/MAX_VALUE))
+      unrepl/browsable (let [[v thunk] (:form x)
                              rem-depth (inc rem-depth)]
                          (set! *print-budget* (bump *print-budget* 2))
                          (write (str "#" (:tag x) " ["))
-                         (print-on write (:form x) rem-depth)
+                         (print-on write v rem-depth)
                          (write " ")
-                         (print-on write (tagged-literal 'unrepl/... (*elide* (lazy-seq [(thunk)]))) rem-depth))
+                         (print-on write (tagged-literal 'unrepl/... (*elide* (lazy-seq [(thunk)]))) rem-depth)
+                         (write "]"))
       (print-tag-lit-on write (:tag x) (:form x) rem-depth)))
 
   clojure.lang.Ratio
