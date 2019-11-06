@@ -459,6 +459,9 @@
   clojure.lang.BigInt
   (-print-on [x write _] (write (str "#unrepl/bigint \"" x "\"")))
 
+  java.util.UUID
+  (-print-on [x write _] (write (str "#uuid \"" x "\"")))
+
   Object
   (-print-on [x write rem-depth]
     (cond
@@ -477,11 +480,6 @@
       (let [repr (binding [*print-length* Long/MAX_VALUE
                            *print-level* Long/MAX_VALUE
                            unrepl/*string-length* Integer/MAX_VALUE]
-                   (println)
-                   (println x)
-                   (println (type x))
-                   (println)
-                   (prn x)
                    (as-str x))]
         (print-trusted-tag-lit-on write "unrepl/object"
                                   [(class x)
