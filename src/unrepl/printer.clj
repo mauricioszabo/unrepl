@@ -353,10 +353,10 @@
   (-print-on [x write rem-depth]
     (case (:tag x)
       unrepl/... (binding ; don't elide the elision
-                  [*print-length* Long/MAX_VALUE
-                   *print-level* Long/MAX_VALUE
-                   *print-budget* Long/MAX_VALUE
-                   unrepl/*string-length* Long/MAX_VALUE]
+                   [*print-length* Long/MAX_VALUE
+                    *print-level* Long/MAX_VALUE
+                    *print-budget* Long/MAX_VALUE
+                    unrepl/*string-length* Long/MAX_VALUE]
                    (write (str "#" (:tag x) " "))
                    (print-on write (:form x) Long/MAX_VALUE))
       unrepl/browsable (let [[v thunk] (:form x)
