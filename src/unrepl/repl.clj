@@ -1,9 +1,13 @@
 (ns unrepl.repl
   (:require [clojure.main :as m]
+            [clojure.test :as t]
             [unrepl.core :as unrepl]
             [unrepl.printer :as p]
             [clojure.edn :as edn]
             [clojure.java.io :as io]))
+
+(alter-var-root #'t/*test-out*
+  (constantly (java.io.OutputStreamWriter. System/out)))
 
 (defn classloader
   "Creates a classloader that obey standard delegating policy.
@@ -225,6 +229,9 @@
                          (set! *source-path* file)
                          (.setCoords ^ILocatedReader in {:line line :col col :file file}))))
 
+(defn patch-result! [id result]
+  (unrepl/write [:patch id result]))
+
 (def schedule-flushes!
   (let [thread-pool (java.util.concurrent.Executors/newScheduledThreadPool 1)
         max-latency-ms 20] ; 50 flushes per second
@@ -336,7 +343,10 @@
                                              ~(tagged-literal 'unrepl/param :unrepl/line)
                                              ~(tagged-literal 'unrepl/param :unrepl/column))
                                           :unrepl.jvm/start-side-loader
-                                          `(attach-sideloader! ~session-id)}
+                                          `(attach-sideloader! ~session-id)
+                                          :patch-result
+                                          `(patch-result! ~(tagged-literal 'unrepl/param :unrepl/id)
+                                                          ~(tagged-literal 'unrepl/param :unrepl/result))}
                                          ext-session-actions)}]))
 
           interruptible-eval
@@ -382,6 +392,7 @@
       (swap! session-state assoc :class-loader slcl)
       (swap! sessions assoc session-id session-state)
       (binding [*out* (scheduled-writer :out unrepl/non-eliding-write)
+                t/*test-out* (scheduled-writer :out unrepl/non-eliding-write)
                 *err* (tagging-writer :err unrepl/non-eliding-write)
                 *in* in
                 *file* (-> in :coords :file)
